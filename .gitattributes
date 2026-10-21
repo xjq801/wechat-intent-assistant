@@ -1,0 +1,11 @@
+* text=auto
+*.cs text eol=lf
+*.xaml text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.safetensors -text
+*.png -text
+*.exe -text
+*.dll -text
+*.cmd text eol=crlf

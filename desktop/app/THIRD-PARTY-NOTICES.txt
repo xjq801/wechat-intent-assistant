@@ -1,0 +1,10 @@
+Third-party runtime components
+
+Microsoft.Windows.SDK.NET.dll and WinRT.Runtime.dll
+Package: Microsoft.Windows.SDK.NET.Ref 10.0.19041.54
+Copyright: © Microsoft Corporation. All rights reserved.
+Package license: https://aka.ms/WinSDKLicenseURL
+Project: https://aka.ms/WinSDKProjectURL
+
+The application uses the separately installed Microsoft .NET Desktop Runtime.
+That runtime is not included in this directory.

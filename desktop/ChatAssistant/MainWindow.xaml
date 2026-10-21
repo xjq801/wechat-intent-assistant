@@ -1,0 +1,55 @@
+<Window x:Class="ChatAssistant.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="聊伴 · 群聊推荐" Width="550" Height="930" MinWidth="460" MinHeight="640" WindowStartupLocation="Manual" Loaded="WindowLoaded" Closed="WindowClosed">
+ <Grid Margin="18">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <StackPanel>
+   <DockPanel><Border Background="#167C69" CornerRadius="10" Width="40" Height="40" Margin="0,0,10,0" DockPanel.Dock="Left"><TextBlock Text="荐" Foreground="White" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><StackPanel><TextBlock Text="群聊推荐" FontSize="23" FontWeight="Bold"/><TextBlock Text="汇总大家的想法，找到合适的吃饭与出行方案" FontSize="11" Foreground="#708079"/></StackPanel></DockPanel>
+   <Border Background="#E5EFEA" CornerRadius="8" Margin="0,13,0,8" Padding="10"><TextBlock x:Name="StatusText" Text="选择群聊窗口，或粘贴一段群聊记录。" Foreground="#276450" TextWrapping="Wrap"/></Border>
+   <WrapPanel><Button Content="观察群聊窗口" Style="{StaticResource Primary}" Click="SelectWindow"/><Button Content="粘贴群聊" Click="PasteChat"/><Button x:Name="PauseButton" Content="暂停观察" IsEnabled="False" Click="TogglePause"/></WrapPanel>
+   <WrapPanel><CheckBox x:Name="AutoCheck" Content="侧栏自动推荐" IsChecked="True" Checked="AutoChanged" Unchecked="AutoChanged"/><CheckBox x:Name="AutoCloudCheck" Content="自动使用千问" Checked="AutoCloudChanged" Unchecked="AutoCloudChanged"/><CheckBox x:Name="PinCheck" Content="置顶" Checked="PinChanged" Unchecked="PinChanged"/></WrapPanel>
+   <TextBlock Text="开启“自动使用千问”会发送已识别的群聊文字；截图留在本机。" TextWrapping="Wrap" FontSize="10" Foreground="#708079" Margin="0,0,0,7" ToolTip="千问服务：maas.qianwenaiapi.com · qwen3.8-flash。每次最多20条/8000字，不包含群聊窗口以外的内容。"/>
+  </StackPanel>
+  <ScrollViewer x:Name="MainScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,6,0,0">
+   <StackPanel>
+    <Border Background="White" CornerRadius="12" Padding="13" Margin="0,0,0,10">
+     <StackPanel>
+      <DockPanel><Button x:Name="RegionButton" Content="调整范围" IsEnabled="False" Click="SelectRegions" DockPanel.Dock="Right" FontSize="11" Padding="8,5"/><TextBlock x:Name="ConversationText" Text="当前群聊" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/></DockPanel>
+      <TextBlock x:Name="RecognitionText" Text="仅观察所选窗口中的可见文字。粘贴记录也可以生成推荐。" TextWrapping="Wrap" Foreground="#708079" FontSize="11" Margin="0,5,0,8"/>
+      <Expander Header="群聊文字 · 可直接校对" IsExpanded="True">
+       <StackPanel Margin="0,7,0,0">
+        <DataGrid x:Name="MessageGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserSortColumns="False" HeadersVisibility="Column" RowHeaderWidth="0" MinHeight="65" MaxHeight="170" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#EEF2EF" BorderBrush="#DFE7E2" Background="White" SelectionUnit="Cell" EnableRowVirtualization="False">
+         <DataGrid.Columns>
+          <DataGridComboBoxColumn x:Name="RoleColumn" Header="归属" Width="76" SelectedItemBinding="{Binding SpeakerLabel, UpdateSourceTrigger=PropertyChanged}"/>
+          <DataGridTextColumn Header="聊天内容（双击可修改）" Width="*" Binding="{Binding Text, UpdateSourceTrigger=PropertyChanged}">
+           <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="Padding" Value="5,6"/></Style></DataGridTextColumn.ElementStyle>
+           <DataGridTextColumn.EditingElementStyle><Style TargetType="TextBox"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="Padding" Value="5"/><Setter Property="MaxLength" Value="2000"/><Setter Property="MaxHeight" Value="130"/><Setter Property="VerticalScrollBarVisibility" Value="Auto"/></Style></DataGridTextColumn.EditingElementStyle>
+          </DataGridTextColumn>
+         </DataGrid.Columns>
+        </DataGrid>
+        <WrapPanel Margin="0,4,0,0"><Button x:Name="ApplyButton" Content="采用校对" Visibility="Collapsed" Click="ConfirmTranscript" FontSize="11" Padding="8,5"/><Button Content="清空上下文" Click="Rebaseline" FontSize="11" Padding="8,5"/></WrapPanel>
+       </StackPanel>
+      </Expander>
+     </StackPanel>
+    </Border>
+    <Border x:Name="RecommendationCard" Background="#EAF3EF" CornerRadius="12" Padding="14" Margin="0,0,0,10">
+     <StackPanel>
+      <TextBlock x:Name="RecommendationTitle" Text="正在等待群里的需求" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
+      <TextBlock x:Name="RecommendationStatus" Text="讨论吃饭或出行时，方案会自动出现在这里。" Foreground="#467063" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,8"/>
+      <TextBlock x:Name="RecommendationSummary" Text="先整理时间、地点、预算和偏好，再比较方案。普通闲聊不会反复弹出推荐。" TextWrapping="Wrap" Margin="0,0,0,8"/>
+      <ItemsControl x:Name="FactList"><ItemsControl.ItemTemplate><DataTemplate><TextBlock TextWrapping="Wrap" Margin="0,2"><Run Text="{Binding Label}" FontWeight="SemiBold"/><Run Text="："/><Run Text="{Binding Value}"/></TextBlock></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+      <TextBlock x:Name="MissingText" Foreground="#805E23" TextWrapping="Wrap" Margin="0,7,0,8"/>
+      <ItemsControl x:Name="OptionList"><ItemsControl.ItemTemplate><DataTemplate>
+       <Border Background="White" CornerRadius="8" Padding="12" Margin="0,0,0,8"><StackPanel><TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock Text="{Binding Reason}" TextWrapping="Wrap" Margin="0,6,0,5"/><TextBlock Text="{Binding Tradeoff}" Foreground="#61766C" TextWrapping="Wrap" FontSize="12"/><Button Content="复制这个方案" Tag="{Binding}" HorizontalAlignment="Left" Click="CopyOption" FontSize="11" Padding="8,5" Margin="0,8,0,0"/></StackPanel></Border>
+      </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+      <WrapPanel><Button x:Name="CopyAllButton" Content="复制推荐汇总" IsEnabled="False" Click="CopyRecommendation"/><Button x:Name="IgnoreButton" Content="这次不推荐" IsEnabled="False" Click="DismissRecommendation"/></WrapPanel>
+      <Expander Header="为什么推荐 · 群聊依据" Margin="0,6,0,0"><StackPanel><TextBlock x:Name="RecommendationSource" FontSize="11" TextWrapping="Wrap" Foreground="#61766C" Margin="0,7,0,6"/><ItemsControl x:Name="EvidenceList"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="11" Foreground="#61766C" Margin="0,3"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Expander>
+     </StackPanel>
+    </Border>
+    <Border x:Name="DemoPanel" Background="#FFF4DD" CornerRadius="10" Padding="10" Margin="0,0,0,10" Visibility="Collapsed"><StackPanel><TextBlock Text="模拟群聊 · 不读取微信" Foreground="#8D661C"/><WrapPanel><Button Content="补充预算与忌口" Click="NextDemo"/><Button Content="切换出行群" Click="SwitchDemo"/><Button Content="模拟取消" Click="CancelDemo"/><Button Content="模拟标题缺失" Click="ToggleDemoTitle"/><Button Content="预览推荐识别范围" Click="PreviewDemoRegions"/></WrapPanel></StackPanel></Border>
+    <Expander Header="演示与处理状态" Margin="0,2,0,10"><StackPanel Margin="0,7,0,0"><Button Content="体验模拟群聊" Click="StartDemo" HorizontalAlignment="Left"/><TextBlock Text="本地推荐整理需求与方案方向。千问可进一步分析语义和取舍。未接入实时商家、票价与库存查询。" TextWrapping="Wrap" FontSize="11" Foreground="#708079"/><TextBlock x:Name="TraceText" Text="尚未处理。" TextWrapping="Wrap" FontSize="11" Foreground="#708079" Margin="0,6,0,8"/></StackPanel></Expander>
+   </StackPanel>
+  </ScrollViewer>
+  <Border Grid.Row="2" BorderBrush="#DCE6DF" BorderThickness="0,1,0,0" Padding="0,9,0,0">
+   <StackPanel><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions><Button Content="立即分析当前讨论" Click="AnalyzeNow"/><Button x:Name="ReplyButton" Grid.Column="1" Content="千问细化方案" Style="{StaticResource Primary}" Click="RequestRecommendation" Margin="0,3,0,3"/></Grid><TextBlock Text="点击“千问细化方案”会发送上方群聊文字。推荐显示在侧栏，由你决定是否分享到群里。" TextWrapping="Wrap" Foreground="#708079" FontSize="10" Margin="0,6,0,0"/></StackPanel>
+  </Border>
+ </Grid>
+</Window>

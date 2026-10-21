@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\ChatAssistant\Platform\*.cs" Link="Platform\%(Filename)%(Extension)" />
+    <Compile Include="..\ChatAssistant\Recognition\MessageParser.cs" Link="Recognition\MessageParser.cs" />
+    <Compile Include="..\ChatAssistant\SyntheticScene.cs" Link="SyntheticScene.cs" />
+    <ProjectReference Include="..\ChatAssistant.Core\ChatAssistant.Core.csproj" />
+  </ItemGroup>
+</Project>

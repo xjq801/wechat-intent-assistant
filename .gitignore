@@ -16,6 +16,13 @@ __pycache__/
 .vs/
 bin/
 obj/
+# Distribute the verified Windows app, without debug symbols or local state.
+desktop/app/*
+!desktop/app/*.exe
+!desktop/app/*.dll
+!desktop/app/*.deps.json
+!desktop/app/*.runtimeconfig.json
+!desktop/app/THIRD-PARTY-NOTICES.txt
 模型/*
 !模型/README.md
 artifacts/

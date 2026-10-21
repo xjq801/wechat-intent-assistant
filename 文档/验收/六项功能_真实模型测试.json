@@ -1,0 +1,399 @@
+{
+  "production_data_modified": false,
+  "external_api_calls_allowed": false,
+  "socket_wait_timeout_seconds": 45.0,
+  "passed": true,
+  "socket_cases": [
+    {
+      "name": "cancel_socket",
+      "dialogue": "小王：明天去上海旅游吧。\n小李：临时要加班，取消这次出行，不去了。\n小王：好，那就取消。",
+      "expected_status": "cancelled",
+      "same_login_token_used": true,
+      "elapsed_seconds": 3.505467700000736,
+      "timeout_seconds": 45.0,
+      "timed_out": false,
+      "post_status_observation_seconds": 0.3,
+      "statuses": [
+        {
+          "room": "Lobby",
+          "status": "waiting",
+          "message": "等待补充消息，约0.05秒后整理需求卡片…"
+        },
+        {
+          "room": "Lobby",
+          "status": "analyzing",
+          "message": "正在识别意图并整理需求卡片…"
+        },
+        {
+          "room": "Lobby",
+          "status": "cancelled",
+          "message": "已停止本次回复。"
+        },
+        {
+          "room": "Lobby",
+          "status": "cancelled",
+          "message": "已识别取消安排，停止本次推荐。"
+        }
+      ],
+      "terminal_statuses": [
+        "cancelled",
+        "cancelled"
+      ],
+      "bot_reply_count": 0,
+      "bot_replies": [],
+      "socket_errors": [],
+      "passed": true
+    },
+    {
+      "name": "neutral_socket",
+      "dialogue": "小王：今天的作业已经提交了。\n小李：好的，老师明天讲评。",
+      "expected_status": "idle",
+      "same_login_token_used": true,
+      "elapsed_seconds": 2.137773799997376,
+      "timeout_seconds": 45.0,
+      "timed_out": false,
+      "post_status_observation_seconds": 0.3,
+      "statuses": [
+        {
+          "room": "Lobby",
+          "status": "waiting",
+          "message": "等待补充消息，约0.05秒后整理需求卡片…"
+        },
+        {
+          "room": "Lobby",
+          "status": "analyzing",
+          "message": "正在识别意图并整理需求卡片…"
+        },
+        {
+          "room": "Lobby",
+          "status": "idle",
+          "message": "当前是普通聊天。需要回答时可选择“询问 AI”。"
+        }
+      ],
+      "terminal_statuses": [
+        "idle"
+      ],
+      "bot_reply_count": 0,
+      "bot_replies": [],
+      "socket_errors": [],
+      "passed": true
+    }
+  ],
+  "card_cases": [
+    {
+      "name": "dining_card",
+      "dialogue": "小王：今晚七点在北京三里屯吃川菜吧，人均一百元，不吃花生。\n小李：好，就这么定了。",
+      "expected_intent": "吃饭",
+      "elapsed_seconds": 7.001228200002515,
+      "timed_out": false,
+      "ack_ok": true,
+      "assistant_state": {
+        "room": "Lobby",
+        "version": 3,
+        "auto_detect": true,
+        "task": {
+          "id": "6c2beb75-8867-410e-92a7-3be7b9713407",
+          "intent": "吃饭",
+          "fields": {
+            "origin": "",
+            "destination": "",
+            "location": "北京三里屯",
+            "time": "今晚七点",
+            "people": "",
+            "budget": "人均一百元",
+            "transport": "",
+            "cuisine": "川菜",
+            "diet": "不吃花生"
+          },
+          "conflicts": [],
+          "owner": "local_ai_smoke",
+          "field_owners": {
+            "location": "speaker:小王",
+            "time": "speaker:小王",
+            "budget": "speaker:小王",
+            "cuisine": "speaker:小王",
+            "diet": "speaker:小王"
+          },
+          "missing": [
+            "people"
+          ],
+          "summary": "就餐地点：北京三里屯；时间：今晚七点；人数：未提供；预算：人均一百元；口味/菜系：川菜；忌口/饮食要求：不吃花生",
+          "clarification": "请补充：人数。",
+          "status": "needs_info"
+        },
+        "proposals": [],
+        "trace": [
+          {
+            "stage": "新建需求",
+            "source": "用户操作",
+            "duration_ms": 0,
+            "summary": "已结束旧上下文，可描述新的吃饭或出行需求。",
+            "at": "16:36:46"
+          },
+          {
+            "stage": "意图识别",
+            "source": "本地 Qwen3 + LoRA",
+            "duration_ms": 6895,
+            "summary": "意图：吃饭；行动：继续行动",
+            "at": "16:36:53"
+          },
+          {
+            "stage": "需求整理",
+            "source": "本地规则",
+            "duration_ms": 7,
+            "summary": "就餐地点：北京三里屯；时间：今晚七点；人数：未提供；预算：人均一百元；口味/菜系：川菜；忌口/饮食要求：不吃花生",
+            "at": "16:36:53"
+          }
+        ],
+        "last_error": "云端补充提取不可用，已保留本地明确识别的字段；请检查需求卡片。"
+      },
+      "field_checks": {
+        "location": true,
+        "time": true,
+        "budget": true,
+        "cuisine": true,
+        "diet": true
+      },
+      "statuses": [
+        {
+          "room": "Lobby",
+          "status": "waiting",
+          "message": "等待补充消息，约0.05秒后整理需求卡片…"
+        },
+        {
+          "room": "Lobby",
+          "status": "analyzing",
+          "message": "正在识别意图并整理需求卡片…"
+        },
+        {
+          "room": "Lobby",
+          "status": "needs_info",
+          "message": "请补充：人数。"
+        }
+      ],
+      "bot_reply_count_before_confirmation": 0,
+      "socket_errors": [],
+      "passed": true
+    },
+    {
+      "name": "travel_card",
+      "dialogue": "小王：明天上午从北京坐高铁去上海，预算六百元。\n小李：可以，我们一起出发。",
+      "expected_intent": "出行",
+      "elapsed_seconds": 3.301403699999355,
+      "timed_out": false,
+      "ack_ok": true,
+      "assistant_state": {
+        "room": "Lobby",
+        "version": 9,
+        "auto_detect": true,
+        "task": {
+          "id": "07812ff3-a320-480b-ac6c-4bef8656e6c4",
+          "intent": "出行",
+          "fields": {
+            "origin": "北京",
+            "destination": "上海",
+            "location": "",
+            "time": "明天上午",
+            "people": "",
+            "budget": "预算六百元",
+            "transport": "高铁",
+            "cuisine": "",
+            "diet": ""
+          },
+          "conflicts": [],
+          "owner": "local_ai_smoke",
+          "field_owners": {
+            "origin": "speaker:小王",
+            "destination": "speaker:小王",
+            "time": "speaker:小王",
+            "budget": "speaker:小王",
+            "transport": "speaker:小王"
+          },
+          "missing": [],
+          "summary": "出发地：北京；目的地：上海；时间：明天上午；人数：未提供；预算：预算六百元；交通方式：高铁",
+          "clarification": "请核对需求，确认后生成可比较的方案。",
+          "status": "ready"
+        },
+        "proposals": [],
+        "trace": [
+          {
+            "stage": "新建需求",
+            "source": "用户操作",
+            "duration_ms": 0,
+            "summary": "已结束旧上下文，可描述新的吃饭或出行需求。",
+            "at": "16:36:53"
+          },
+          {
+            "stage": "意图识别",
+            "source": "本地 Qwen3 + LoRA",
+            "duration_ms": 3157,
+            "summary": "意图：出行；行动：继续行动",
+            "at": "16:36:56"
+          },
+          {
+            "stage": "需求整理",
+            "source": "本地规则",
+            "duration_ms": 5,
+            "summary": "出发地：北京；目的地：上海；时间：明天上午；人数：未提供；预算：预算六百元；交通方式：高铁",
+            "at": "16:36:56"
+          }
+        ],
+        "last_error": "云端补充提取不可用，已保留本地明确识别的字段；请检查需求卡片。"
+      },
+      "field_checks": {
+        "origin": true,
+        "destination": true,
+        "time": true,
+        "budget": true,
+        "transport": true
+      },
+      "statuses": [
+        {
+          "room": "Lobby",
+          "status": "waiting",
+          "message": "等待补充消息，约0.05秒后整理需求卡片…"
+        },
+        {
+          "room": "Lobby",
+          "status": "analyzing",
+          "message": "正在识别意图并整理需求卡片…"
+        },
+        {
+          "room": "Lobby",
+          "status": "ready",
+          "message": "请核对需求，确认后生成可比较的方案。"
+        }
+      ],
+      "bot_reply_count_before_confirmation": 0,
+      "socket_errors": [],
+      "passed": true
+    }
+  ],
+  "registration_ok": true,
+  "login_ok": true,
+  "dining_confirmation": {
+    "name": "dining_edit_and_confirm",
+    "edit_ack_ok": true,
+    "unmodified_fields_preserved": true,
+    "confirmation_ack_ok": true,
+    "timed_out": false,
+    "assistant_state": {
+      "room": "Lobby",
+      "version": 6,
+      "auto_detect": true,
+      "task": {
+        "id": "6c2beb75-8867-410e-92a7-3be7b9713407",
+        "intent": "吃饭",
+        "fields": {
+          "origin": "",
+          "destination": "",
+          "location": "北京三里屯",
+          "time": "今晚七点",
+          "people": "两人",
+          "budget": "人均一百元",
+          "transport": "",
+          "cuisine": "川菜",
+          "diet": "不吃花生"
+        },
+        "conflicts": [],
+        "owner": "local_ai_smoke",
+        "field_owners": {
+          "location": "speaker:小王",
+          "time": "speaker:小王",
+          "budget": "speaker:小王",
+          "cuisine": "speaker:小王",
+          "diet": "speaker:小王",
+          "people": "local_ai_smoke"
+        },
+        "missing": [],
+        "summary": "就餐地点：北京三里屯；时间：今晚七点；人数：两人；预算：人均一百元；口味/菜系：川菜；忌口/饮食要求：不吃花生",
+        "clarification": "请核对需求，确认后生成可比较的方案。",
+        "status": "done"
+      },
+      "proposals": [
+        {
+          "id": "plan-1",
+          "title": "优先匹配口味",
+          "description": "通用规划方案（非实时查询）。地点：北京三里屯；时间：今晚七点；人数：两人；菜系：川菜；饮食要求：不吃花生。按已确认的菜系或口味筛选餐厅类型，点餐前逐项确认忌口。",
+          "reason": "适合对口味和饮食要求有明确偏好的聚餐。",
+          "budget_fit": "用户预算：人均一百元；尚未查询实际价格，是否符合预算待核验。",
+          "tradeoff": "合适门店、可预约时间与人均价格需要核验。",
+          "verify": "非实时地图信息：请在地图平台或向商家核验位置、营业状态、价格、座位及忌口适配。"
+        },
+        {
+          "id": "plan-2",
+          "title": "优先控制预算",
+          "description": "通用规划方案（非实时查询）。地点：北京三里屯；时间：今晚七点；人数：两人；菜系：川菜；饮食要求：不吃花生。先按预算筛选可比较的菜单或套餐，确认人数和总额口径后再决定。",
+          "reason": "便于控制总支出，避免遗漏饮品、包间等额外费用。",
+          "budget_fit": "用户预算：人均一百元；尚未查询实际价格，是否符合预算待核验。",
+          "tradeoff": "套餐的口味选择和忌口适配可能有限，需要确认。",
+          "verify": "非实时地图信息：请在地图平台或向商家核验位置、营业状态、价格、座位及忌口适配。"
+        },
+        {
+          "id": "plan-3",
+          "title": "优先方便集合",
+          "description": "通用规划方案（非实时查询）。地点：北京三里屯；时间：今晚七点；人数：两人；菜系：川菜；饮食要求：不吃花生。围绕已确认地点比较交通方便、便于所有人到达的餐厅类型。",
+          "reason": "适合多人集合，减少到达时间差异。",
+          "budget_fit": "用户预算：人均一百元；尚未查询实际价格，是否符合预算待核验。",
+          "tradeoff": "距离、通行时间和门店座位尚未查询。",
+          "verify": "非实时地图信息：请在地图平台或向商家核验位置、营业状态、价格、座位及忌口适配。"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "新建需求",
+          "source": "用户操作",
+          "duration_ms": 0,
+          "summary": "已结束旧上下文，可描述新的吃饭或出行需求。",
+          "at": "16:36:46"
+        },
+        {
+          "stage": "意图识别",
+          "source": "本地 Qwen3 + LoRA",
+          "duration_ms": 6895,
+          "summary": "意图：吃饭；行动：继续行动",
+          "at": "16:36:53"
+        },
+        {
+          "stage": "需求整理",
+          "source": "本地规则",
+          "duration_ms": 7,
+          "summary": "就餐地点：北京三里屯；时间：今晚七点；人数：未提供；预算：人均一百元；口味/菜系：川菜；忌口/饮食要求：不吃花生",
+          "at": "16:36:53"
+        },
+        {
+          "stage": "人工修正",
+          "source": "用户确认",
+          "duration_ms": 0,
+          "summary": "已更新：人数",
+          "at": "16:36:53"
+        },
+        {
+          "stage": "确认需求",
+          "source": "用户确认",
+          "duration_ms": 0,
+          "summary": "就餐地点：北京三里屯；时间：今晚七点；人数：两人；预算：人均一百元；口味/菜系：川菜；忌口/饮食要求：不吃花生",
+          "at": "16:36:53"
+        },
+        {
+          "stage": "方案生成",
+          "source": "本地通用规划",
+          "duration_ms": 0,
+          "summary": "生成 3 个待核实方案；不含实时库存或价格。",
+          "at": "16:36:53"
+        }
+      ],
+      "last_error": "云端方案暂不可用或未通过校验，已展示本地通用规划；实际价格与可用性待核验。"
+    },
+    "proposal_count": 3,
+    "comparable_proposals": true,
+    "offline_source_confirmed": true,
+    "state_persisted": true,
+    "bot_reply_count": 1,
+    "bot_replies": [
+      "已根据确认的吃饭需求整理 3 个方案：\n就餐地点：北京三里屯；时间：今晚七点；人数：两人；预算：人均一百元；口味/菜系：川菜；忌口/饮食要求：不吃花生\n1. 优先匹配口味：通用规划方案（非实时查询）。地点：北京三里屯；时间：今晚七点；人数：两人；菜系：川菜；饮食要求：不吃花生。按已确认的菜系或口味筛选餐厅类型，点餐前逐项确认忌口。\n2. 优先控制预算：通用规划方案（非实时查询）。地点：北京三里屯；时间：今晚七点；人数：两人；菜系：川菜；饮食要求：不吃花生。先按预算筛选可比较的菜单或套餐，确认人数和总额口径后再决定。\n3. 优先方便集合：通用规划方案（非实时查询）。地点：北京三里屯；时间：今晚七点；人数：两人；菜系：川菜；饮食要求：不吃花生。围绕已确认地点比较交通方便、便于所有人到达的餐厅类型。\n请在需求面板比较匹配理由、预算和待核实信息。以上为非实时建议。"
+    ],
+    "socket_errors": [],
+    "passed": true
+  }
+}

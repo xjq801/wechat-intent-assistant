@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>意图识别聊天系统 | 注册</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8DB48E', // 豆绿
+                        secondary: '#F5F5DC', // 米白
+                        neutral: '#E8E8E8', // 浅灰
+                        dark: '#555555',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            /* 动态渐变背景 */
+            .bg-gradient-dynamic {
+                background: linear-gradient(135deg, #8DB48E 0%, #F5F5DC 50%, #E8E8E8 100%);
+                background-size: 400% 400%;
+                animation: gradient-animation 15s ease infinite;
+            }
+            /* 毛玻璃与阴影 */
+            .glass-card {
+                background: rgba(255, 255, 255, 0.85);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(141, 180, 142, 0.2);
+                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+            }
+            /* 输入框焦点动效 */
+            .input-focus-effect {
+                transition: all 0.3s ease;
+            }
+            .input-focus-effect:focus-within {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 15px -3px rgba(141, 180, 142, 0.2);
+            }
+        }
+
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-dynamic min-h-screen flex items-center justify-center p-4 font-sans" id="reg-bg">
+    
+    <div class="w-full max-w-md animate-fade-in">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-light tracking-widest text-primary drop-shadow-sm">意图识别聊天系统</h1>
+        </div>
+        
+        <div class="glass-card rounded-[2rem] p-10 transform transition-all duration-500">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-light text-dark mb-2">创建账号</h2>
+                <p class="text-dark/60 text-sm">加入我们，开始您的沟通之旅</p>
+            </div>
+            
+            <form id="register-form" class="space-y-6">
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold text-dark/50 uppercase tracking-wider ml-1">设置账号</label>
+                    <div class="relative input-focus-effect">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-primary/60">
+                            <i class="fa fa-user-plus"></i>
+                        </span>
+                        <input type="text" id="username" required maxlength="64" autocomplete="username"
+                            class="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-primary/10 bg-white/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:bg-white transition-all text-dark"
+                            placeholder="请输入账号">
+                    </div>
+                </div>
+                
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold text-dark/50 uppercase tracking-wider ml-1">设置密码</label>
+                    <div class="relative input-focus-effect">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-primary/60">
+                            <i class="fa fa-lock"></i>
+                        </span>
+                        <input type="password" id="password" required minlength="6" maxlength="128" autocomplete="new-password"
+                            class="w-full pl-11 pr-12 py-3.5 rounded-2xl border border-primary/10 bg-white/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:bg-white transition-all text-dark"
+                            placeholder="请输入密码">
+                        <button type="button" id="toggle-password" class="absolute inset-y-0 right-0 px-4 text-gray-400 hover:text-primary transition-colors">
+                            <i class="fa fa-eye-slash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" id="reg-btn" 
+                    class="w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-2xl font-medium shadow-lg shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                    <span id="btn-text">立即注册</span>
+                    <i id="btn-spinner" class="fa fa-circle-o-notch fa-spin hidden"></i>
+                </button>
+            </form>
+            
+            <div class="mt-8 text-center">
+                <p class="text-sm text-dark/60">
+                    已经有账号? 
+                    <a href="/login" class="text-primary font-semibold hover:underline ml-1">返回登录</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed top-6 right-6 translate-x-[150%] transition-transform duration-500 z-[100]">
+        <div id="toast-content" class="bg-white border-l-4 border-primary rounded-xl shadow-2xl p-4 flex items-center gap-3 min-w-[280px]">
+            <i id="toast-icon" class="fa fa-check-circle text-primary text-xl"></i>
+            <div>
+                <h4 id="toast-title" class="font-bold text-dark text-sm">提示</h4>
+                <p id="toast-msg" class="text-dark/70 text-xs"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        const regForm = document.getElementById('register-form');
+        const regBtn = document.getElementById('reg-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnSpinner = document.getElementById('btn-spinner');
+        const toast = document.getElementById('toast');
+        let requestTimer = null;
+
+        function resetSubmit() {
+            clearTimeout(requestTimer);
+            requestTimer = null;
+            regBtn.disabled = false;
+            btnText.textContent = '立即注册';
+            btnSpinner.classList.add('hidden');
+        }
+
+        // Toast 功能
+        function showToast(type, title, msg) {
+            const content = document.getElementById('toast-content');
+            const icon = document.getElementById('toast-icon');
+            content.className = `bg-white border-l-4 rounded-xl shadow-2xl p-4 flex items-center gap-3 min-w-[280px] ${type === 'err' ? 'border-red-400' : 'border-primary'}`;
+            icon.className = `fa text-xl ${type === 'err' ? 'fa-exclamation-circle text-red-400' : 'fa-check-circle text-primary'}`;
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-msg').innerText = msg;
+            
+            toast.classList.remove('translate-x-[150%]');
+            setTimeout(() => toast.classList.add('translate-x-[150%]'), 3000);
+        }
+
+        // 密码切换
+        document.getElementById('toggle-password').addEventListener('click', function() {
+            const pwdInput = document.getElementById('password');
+            const icon = this.querySelector('i');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                icon.className = 'fa fa-eye';
+            } else {
+                pwdInput.type = 'password';
+                icon.className = 'fa fa-eye-slash';
+            }
+        });
+
+        // 注册提交
+        regForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (regBtn.disabled) return;
+            if (!socket.connected) {
+                showToast('err', '尚未连接', '请确认程序正在运行，连接恢复后再注册。');
+                return;
+            }
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value;
+
+            regBtn.disabled = true;
+            btnText.innerText = "正在注册...";
+            btnSpinner.classList.remove('hidden');
+            requestTimer = setTimeout(() => {
+                resetSubmit();
+                showToast('err', '注册超时', '暂未收到服务器回复，可先尝试登录，避免重复注册。');
+            }, 15000);
+            socket.emit('register_action', {u, p});
+        });
+
+        socket.on('ok', (m) => {
+            clearTimeout(requestTimer);
+            showToast('ok', '注册成功', m + ' 正在跳转登录页...');
+            setTimeout(() => window.location.href='/login', 1500);
+        });
+
+        socket.on('err', (m) => {
+            showToast('err', '注册失败', m);
+            resetSubmit();
+        });
+        socket.on('disconnect', () => {
+            resetSubmit();
+            showToast('err', '连接中断', '服务器连接已断开，正在尝试重连。');
+        });
+        socket.on('connect_error', () => {
+            resetSubmit();
+            showToast('err', '无法连接', '请确认程序正在运行后重试。');
+        });
+
+        // 动态背景视差
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            document.getElementById('reg-bg').style.backgroundPosition = `${50 + x * 5}% ${50 + y * 5}%`;
+        });
+    </script>
+</body>
+</html>

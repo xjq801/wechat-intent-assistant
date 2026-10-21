@@ -1,0 +1,22 @@
+# Local credentials, private conversations and uploads
+.local/
+.env
+.env.*
+!.env.example
+*.dpapi
+data_user/
+uploads/
+*.log
+# Environments, caches, build output and large base model
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.vs/
+bin/
+obj/
+模型/*
+!模型/README.md
+artifacts/
+*.zip

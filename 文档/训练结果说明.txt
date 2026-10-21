@@ -1,0 +1,54 @@
+﻿本地 LoRA 训练与应用接入结果
+日期：2026-10-20（Asia/Shanghai）
+
+程序正在本机运行：http://127.0.0.1:5000/chat
+以后启动：双击同目录的“启动聊天系统.cmd”。
+启动器依赖原项目仍在 D:\肖龙辉毕设\代码，基础模型仍在 D:\肖龙辉毕设\模型\Qwen3-0.6B。
+
+训练：
+基础模型 Qwen3-0.6B，LoRA rank=8，alpha=32，dropout=0.1。
+可训练参数 5,046,272（约0.84%）；只训练助手输出的JSON及结束符。
+原始450条训练数据中，排除与测试重复的两条（0-based索引159、229），不修改原始JSON文件。
+剩余448条按意图/行动联合分层为402条训练和46条验证；另150条固定测试不参与训练或模型选择。
+种子42，batch=2，gradient accumulation=4，learning rate=1e-4，max length=512，3个epoch/153步。
+GPU：NVIDIA GeForce RTX 3070 Ti Laptop GPU；PyTorch 2.9.1+cu126；BF16。
+完整训练耗时 222.7 秒；
+峰值已分配显存 5.30 GiB（不含其他程序与全部驱动开销）。
+最佳验证loss 0.053174，最终导出与最佳checkpoint的392个张量逐项一致。
+使用固定种子并记录环境，但出现memory-efficient attention非确定性警告，未声称跨环境或逐位复现。
+原始后台训练进程的数值退出码无法从独立观察器取回；其完成由epoch=3、step=153和最终产物核验。
+两个短试训与完整训练均保留在原项目model_output/runs中，短试训不计作完整训练。
+
+固定测试集结果（150条）：
+意图分类：150/150，准确率100.0%，macro-F1 1.0000。
+行动状态：150/150，准确率100.0%。
+结构化输出有效：150/150；额外严格json.loads检查也是150/150。
+需求描述逐字一致：105/150，70.0%。
+分项为出行37/50、吃饭18/50、无意图50/50；总体比例包含较简单的“无”类。
+逐字一致不等于语义质量；不同措辞不能直接算语义错误，也不能默认算正确。
+测试集较小，未做完整语义近重复审查；这些结果不证明真实自由聊天场景达到同等准确率。
+新出行示例虽识别对意图和行动，但观察到需求提取遗漏时间及600元预算，复杂需求仍须人工确认。
+
+应用验证：
+隔离目录内的注册、登录、真实模型识别、消息广播和AI回调均通过；
+餐饮、出行、无意图、取消行动四类工程示例通过意图/行动检查。
+未修改用户已有聊天记录，未调用付费或外部模型API。
+正式服务已预加载CUDA模型，登录/注册/聊天HTTP返回200，WebSocket连接通过，页面显示ONLINE。
+正式系统仍使用原本的10秒等待逻辑，因此发完消息后通常需要等待十几秒。
+无意图与取消行动按照现有bot逻辑不主动发推荐消息。
+当前已启用本地意图识别。餐厅、高铁实时查询及外部模型推荐仍需另行配置API。
+
+已部署权重：
+D:\肖龙辉毕设\代码\model_output\lora_qwen_0.6b_intent\lora_adapter
+adapter_model.safetensors SHA256：
+8ed0416b387c897b2681ebb456cec453b1b4e050ef708b1c163079d537d1af56
+
+复跑（PowerShell，在原代码目录执行，并更换为未存在的run目录）：
+.\.venv\Scripts\python.exe train_local_lora.py --run-dir model_output/runs/another_run --no-gradient-checkpointing
+.\.venv\Scripts\python.exe evaluate_local_lora.py --adapter-path model_output/runs/another_run/lora_adapter --output-dir model_output/evaluations/another_test
+测试集应保持固定；不要根据这次测试结果反复调参后仍把同一测试集当作未见数据。
+
+本压缩包包含适配器、分词器、训练/评估记录、原始逐条预测、应用集成结果和新增脚本；
+不包含1.5GB基础模型、Python环境或用户账户/聊天记录。
+CUDA安装依据：https://pytorch.org/get-started/previous-versions/
+临时2.6GB安装包已在安装和GPU运算验证成功后移除，保留来源与SHA256记录。

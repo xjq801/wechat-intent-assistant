@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一起聊 · 智能需求助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6B8E6B',
+                        primaryLight: '#F0F4F0',
+                        accent: '#8DB48E',
+                        neutralBg: '#F8F9F8',
+                        chatBg: '#F3F5F3',
+                        dark: '#3A3A3A',
+                        botBg: '#E8F0FE',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body, html { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+        body { font-family: 'Noto Sans SC', sans-serif; background-color: #F3F5F3; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5CB; border-radius: 10px; }
+        .time-divider { display: flex; align-items: center; justify-content: center; margin: 2rem 0; position: relative; }
+        .time-tag { background-color: rgba(0, 0, 0, 0.05); color: #888; font-size: 11px; padding: 2px 10px; border-radius: 6px; z-index: 1; }
+        .msg-fade-in { animation: msgUp 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; }
+        @keyframes msgUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        #img-viewer { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 999; align-items: center; justify-content: center; cursor: zoom-out; }
+        #img-viewer img { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        
+        /* 引用样式 */
+        .quote-box { border-left: 3px solid rgba(0,0,0,0.1); padding-left: 8px; margin-bottom: 4px; font-size: 12px; opacity: 0.8; }
+        .reply-bar { display: none; background: #eee; padding: 8px 16px; border-radius: 12px 12px 0 0; border-bottom: 1px solid #ddd; align-items: center; justify-content: space-between; }
+        
+        /* 输入框样式调整 */
+        textarea { resize: none; }
+        .msg-media-img { max-width: min(100%, 640px); max-height: 70vh; width: auto; height: auto; object-fit: contain; }
+        .msg-media-video { max-width: min(100%, 640px); max-height: 70vh; width: auto; height: auto; }
+        .msg-media-audio { width: 100%; max-width: 28rem; min-width: 220px; height: 40px; }
+    </style>
+    <link rel="stylesheet" href="/static/assistant.css">
+</head>
+<body class="h-screen w-screen flex">
+
+    <div id="img-viewer">
+        <img id="viewer-img" src="" alt="大图预览">
+    </div>
+
+    <aside id="sidebar" class="w-72 bg-[#F0F2F0] border-r border-gray-100 flex flex-col shadow-inner shrink-0">
+        <div class="p-8">
+            <div id="open-settings" class="bg-white p-3 rounded-2xl flex items-center gap-3 cursor-pointer hover:shadow-xl transition-all border border-gray-100">
+                <img id="myAv" src="" class="w-12 h-12 rounded-xl object-cover ring-4 ring-primaryLight">
+                <div class="overflow-hidden">
+                    <div id="myNi" class="font-bold text-dark truncate text-sm"></div>
+                    <div id="connection-status" class="text-[10px] text-gray-400 font-bold tracking-wider" role="status">正在连接</div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-6 overflow-y-auto custom-scrollbar">
+            <div>
+                <p class="px-4 text-[10px] uppercase tracking-widest text-gray-400 font-black mb-4">我的聊天群</p>
+                <div id="btn-Lobby" title="聊天群一" class="room active bg-primary text-white p-4 rounded-2xl cursor-pointer flex items-center gap-3 shadow-lg">
+                    <i class="fa fa-home text-lg"></i> <span class="font-bold">聊天群一</span>
+                </div>
+                <div id="btn-ZenRoom" title="聊天群二" class="room hover:bg-white p-4 rounded-2xl cursor-pointer flex items-center gap-3 text-gray-500 mt-2">
+                    <i class="fa fa-android text-lg"></i> <span class="font-bold">聊天群二</span>
+                </div>
+            </div>
+
+            <div>
+                <p class="px-4 text-[10px] uppercase tracking-widest text-gray-400 font-black mb-4">在线成员 <span id="user-count">0</span></p>
+                <div id="user-list" class="space-y-3 px-2 text-sm text-dark font-medium"></div>
+            </div>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col bg-white">
+        <header class="h-20 flex items-center justify-between px-8 bg-white/50 backdrop-blur-sm border-b border-gray-50">
+            <div class="flex items-center gap-4">
+                <div id="connection-dot" class="w-3 h-3 rounded-full bg-gray-400"></div>
+                <div>
+                    <h2 id="roomName" class="text-xl font-black text-dark tracking-tight">聊天群一</h2>
+                    <p class="room-subtitle">聊出想法，一起把安排定下来</p>
+                </div>
+            </div>
+            <button id="toggle-assistant" class="assistant-open-button" type="button" aria-controls="assistant-panel" aria-expanded="false">
+                <span id="assistant-dot"></span>需求助手
+            </button>
+        </header>
+
+        <div class="flex items-center justify-between bg-gray-50">
+            <div id="chat-status" class="px-8 py-2 text-sm text-gray-500 bg-gray-50" role="status" aria-live="polite">正在连接服务器…</div>
+            <button id="cancel-ai" type="button" hidden class="mr-8 px-3 py-1 text-sm rounded-lg border border-gray-300 text-gray-600 hover:bg-white shrink-0">停止本次回复</button>
+        </div>
+
+        <div id="msgs" class="flex-1 overflow-y-auto p-10 space-y-6 custom-scrollbar bg-chatBg"></div>
+
+        <footer class="p-8 bg-white">
+            <div class="max-w-4xl mx-auto flex flex-col bg-neutralBg border-2 border-transparent focus-within:border-primary/20 rounded-[2rem] overflow-hidden shadow-sm transition-all">
+                <div class="composer-help"><span id="composer-mode-hint">普通发送 · 自动整理需求</span><span>@AI 或点击“询问 AI”直接提问</span></div>
+                <div id="replyBar" class="reply-bar">
+                    <div class="text-xs text-gray-500 truncate mr-4">引用 <span id="replyNick" class="font-bold"></span>: <span id="replyText"></span></div>
+                    <button id="cancel-reply" type="button" class="text-gray-400 hover:text-red-500"><i class="fa fa-times-circle"></i></button>
+                </div>
+                
+                <div class="composer-input-row flex items-end gap-3 p-3 pl-6">
+                    <button id="attach-file" type="button" disabled class="text-gray-400 hover:text-primary mb-2">
+                        <i class="fa fa-plus-circle text-2xl"></i>
+                    </button>
+                    <input type="file" id="fi" hidden accept=".png,.jpg,.jpeg,.gif,.webp,.bmp,.mp3,.wav,.m4a,.aac,.flac,.ogg,.webm,.mp4,.mov,.m4v">
+                    <textarea id="mi" rows="1" maxlength="4000" placeholder="说说你的安排，或向 AI 提问…" aria-label="聊天消息" class="flex-1 bg-transparent border-none outline-none text-[15px] text-dark py-3 custom-scrollbar" style="max-height: 120px;"></textarea>
+                    <div class="composer-actions">
+                        <button id="ask-ai" type="button" disabled title="将这条消息直接交给 AI 回答">询问 AI</button>
+                        <button id="send-message" type="button" disabled aria-label="发送消息" title="发送消息（Enter）" class="bg-primary hover:bg-dark text-white w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-90 mb-0.5">
+                            <i class="fa fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <div id="assistant-backdrop" class="assistant-backdrop" hidden></div>
+    <aside id="assistant-panel" class="assistant-panel" aria-label="智能需求助手">
+        <div class="assistant-heading">
+            <div><h2>需求助手</h2><p>把聊天里的想法，变成可确认的安排</p></div>
+            <div class="assistant-heading-actions">
+                <span id="assistant-badge" class="assistant-badge">正在同步</span>
+                <button id="close-assistant" type="button" class="assistant-close" aria-label="关闭需求助手">×</button>
+            </div>
+        </div>
+        <div class="assistant-scroll custom-scrollbar">
+            <div class="assistant-preferences">
+                <label class="auto-detect-row" for="auto-detect"><span>自动整理本群需求</span><input id="auto-detect" type="checkbox" checked disabled></label>
+                <p id="auto-detect-help" class="auto-detect-help">自动整理吃饭、出行需求；确认后才生成方案。</p>
+            </div>
+            <p id="assistant-notice" class="assistant-notice" role="status" aria-live="polite"></p>
+            <div id="assistant-empty" class="assistant-empty">
+                <div class="assistant-empty-icon"><i class="fa fa-leaf"></i></div>
+                <h3>从一句话开始</h3>
+                <p>在群里聊吃饭或出行，助手会整理地点、时间和偏好。你可以补充或修改，再确认生成方案。</p>
+                <div class="example-label">试试这样说 · 点击填入聊天框</div>
+                <button id="example-dining" type="button" class="assistant-example">今晚在北京朝阳区，3 人吃饭，人均 100 元，不吃辣 →</button>
+                <button id="example-travel" type="button" class="assistant-example">明天上午北京去上海，2 人坐高铁，每人 600 元 →</button>
+            </div>
+            <section id="assistant-task" hidden aria-label="当前需求">
+                <div class="task-head">
+                    <h3 id="task-title">当前需求</h3>
+                    <span id="task-owner" class="task-owner"></span>
+                    <p id="task-summary" class="task-summary"></p>
+                </div>
+                <p id="task-clarification" class="task-clarification" hidden></p>
+                <div id="task-fields" class="task-fields"></div>
+                <div id="task-conflicts" class="task-conflicts" hidden></div>
+                <p id="task-edit-hint" class="field-edit-hint"></p>
+                <div class="task-edit-actions">
+                    <button id="task-save" type="button" class="task-button" disabled>保存需求</button>
+                    <button id="task-reload" type="button" class="task-button subtle" hidden>重新载入</button>
+                </div>
+                <div class="task-main-actions">
+                    <button id="task-confirm" type="button" class="task-button primary" disabled>确认并生成方案</button>
+                    <button id="task-cancel" type="button" class="task-button danger" disabled>取消</button>
+                </div>
+                <div class="task-end-actions">
+                    <button id="task-new" type="button" class="task-button subtle" disabled>＋ 开始新安排</button>
+                    <button id="task-complete" type="button" class="task-button subtle" disabled>标记为已完成 ✓</button>
+                </div>
+            </section>
+            <section id="proposal-section" class="proposal-section" hidden>
+                <p class="section-eyebrow">按相同维度比较</p>
+                <h3>可以这样安排</h3>
+                <p class="proposal-disclaimer">以下为规划建议，实时价格、余票和营业情况均需另行核实。</p>
+                <div id="proposal-list"></div>
+            </section>
+            <details id="assistant-trace" class="assistant-trace">
+                <summary>查看处理过程 <span id="trace-count" class="trace-count">0</span></summary>
+                <p class="trace-help">展示执行步骤、处理来源和耗时，帮助理解需求如何被整理。</p>
+                <ol id="trace-list" class="trace-list"></ol>
+            </details>
+        </div>
+    </aside>
+
+    <div id="settings-overlay" class="hidden fixed inset-0 bg-dark/60 backdrop-blur-md z-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-[3rem] w-96 shadow-2xl border border-white">
+            <h3 class="text-xl font-black text-dark mb-8 text-center tracking-tight">资料中心</h3>
+            <div id="choose-avatar" class="relative mx-auto w-28 h-28 mb-8 group cursor-pointer">
+                <img id="setPre" src="" class="w-full h-full rounded-[2.5rem] object-cover ring-8 ring-primaryLight shadow-inner">
+                <div class="absolute inset-0 bg-black/20 rounded-[2.5rem] flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all scale-95 group-hover:scale-100">
+                    <i class="fa fa-camera text-2xl"></i>
+                </div>
+            </div>
+            <input type="file" id="ai" hidden accept=".png,.jpg,.jpeg,.gif,.webp,.bmp">
+            <div class="space-y-4 mb-8">
+                <label class="text-[10px] font-bold text-gray-400 uppercase ml-4">用户昵称</label>
+                <input id="editNick" maxlength="40" class="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-dark" placeholder="起个名字吧">
+            </div>
+            <p id="profile-status" class="text-sm text-red-600 mb-3" role="status"></p>
+            <div class="flex gap-4">
+                <button id="save-profile" type="button" class="flex-1 bg-primary text-white py-4 rounded-2xl font-bold shadow-xl shadow-primary/20 active:scale-95 transition-all">保存修改</button>
+                <button id="close-settings" type="button" class="flex-1 bg-gray-100 text-gray-500 py-4 rounded-2xl font-bold active:scale-95 transition-all">下次再说</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/assistant.js"></script>
+    <script>
+
+        const socket = io({autoConnect: false});
+        const myU = localStorage.getItem('chat_u');
+        const chatToken = localStorage.getItem('chat_token');
+        let curR = 'Lobby', tempAv = '', lastTimeStr = '', currentQuote = null;
+        let joinedRoom = false, pendingSend = null, uploading = false;
+        let pendingRoomMessages = [], pendingAiStatus = null;
+        let assistantUI = null;
+        const seenMessageIds = new Set();
+        const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/847/847969.png';
+        const MEDIA_EXT = {
+            image: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'],
+            video: ['mp4', 'webm', 'ogg', 'mov', 'm4v'],
+            audio: ['mp3', 'wav', 'm4a', 'aac', 'flac', 'ogg', 'webm']
+        };
+        const byId = (id) => document.getElementById(id);
+
+        // All user/model content is inserted as text or DOM properties, never HTML.
+        function node(tag, className = '', text = '') {
+            const el = document.createElement(tag);
+            el.className = className;
+            if (text !== '') el.textContent = String(text ?? '');
+            return el;
+        }
+
+        function safeMediaUrl(value, kind = 'image') {
+            if (typeof value !== 'string' || !MEDIA_EXT[kind]) return '';
+            const raw = value.trim();
+            if (!raw || /[\u0000-\u0020\\]/.test(raw)) return '';
+            let parsed;
+            try { parsed = new URL(raw, window.location.origin); } catch (_) { return ''; }
+            if (parsed.username || parsed.password) return '';
+            let pathname;
+            try { pathname = decodeURIComponent(parsed.pathname).toLowerCase(); } catch (_) { return ''; }
+            const ext = pathname.split('.').pop();
+            if (!MEDIA_EXT[kind].includes(ext)) return '';
+            if (raw.startsWith('/static/uploads/') &&
+                /^\/static\/uploads\/[a-zA-Z0-9_-]+\.[a-zA-Z0-9]+$/.test(raw) &&
+                parsed.origin === window.location.origin) return raw;
+            if (!raw.startsWith('https://') || parsed.protocol !== 'https:') return '';
+            return parsed.href;
+        }
+
+        function avatar(value, className) {
+            const img = node('img', className);
+            img.alt = '';
+            img.referrerPolicy = 'no-referrer';
+            img.src = safeMediaUrl(value, 'image') || DEFAULT_AVATAR;
+            img.addEventListener('error', () => {
+                if (img.src !== DEFAULT_AVATAR) img.src = DEFAULT_AVATAR;
+            }, {once: true});
+            return img;
+        }
+
+        function status(message, isError = false) {
+            byId('chat-status').textContent = String(message ?? '');
+            byId('chat-status').className = `px-8 py-2 text-sm ${isError ? 'text-red-700 bg-red-50' : 'text-gray-500 bg-gray-50'}`;
+        }
+
+        function updateControls() {
+            const ready = socket.connected && joinedRoom && !pendingSend && !uploading;
+            byId('send-message').disabled = !ready;
+            byId('ask-ai').disabled = !ready;
+            byId('attach-file').disabled = !ready;
+            byId('send-message').style.opacity = ready ? '1' : '0.5';
+            byId('attach-file').style.opacity = ready ? '1' : '0.5';
+            if (assistantUI) assistantUI.setConnected();
+        }
+
+        function connection(connected, message) {
+            byId('connection-status').textContent = connected ? '已连接' : '未连接';
+            byId('connection-status').className = `text-[10px] font-bold tracking-wider ${connected ? 'text-primary' : 'text-red-500'}`;
+            byId('connection-dot').className = `w-3 h-3 rounded-full ${connected ? 'bg-green-500' : 'bg-gray-400'}`;
+            if (message) status(message, !connected);
+            updateControls();
+        }
+
+        function requireLogin(message) {
+            socket.disconnect();
+            ['chat_u', 'chat_token', 'chat_nick', 'chat_avatar'].forEach(key => localStorage.removeItem(key));
+            sessionStorage.setItem('chat_login_notice', message || '请重新登录以继续使用。');
+            window.location.replace('/login');
+        }
+
+        function updateUserInfo() {
+            byId('myAv').src = safeMediaUrl(localStorage.getItem('chat_avatar'), 'image') || DEFAULT_AVATAR;
+            byId('myNi').textContent = localStorage.getItem('chat_nick') || myU || '';
+        }
+        updateUserInfo();
+
+        socket.on('connect', () => {
+            joinedRoom = false;
+            pendingRoomMessages = [];
+            pendingAiStatus = null;
+            if (assistantUI) assistantUI.setConnected();
+            connection(true, '正在进入频道…');
+            socket.emit('join', {room: curR, u: myU, token: chatToken});
+        });
+        socket.on('disconnect', () => {
+            joinedRoom = false;
+            pendingRoomMessages = [];
+            pendingAiStatus = null;
+            if (assistantUI) assistantUI.disconnect();
+            releasePendingSend();
+            byId('cancel-ai').hidden = true;
+            byId('user-list').replaceChildren();
+            byId('user-count').textContent = '0';
+            connection(false, '连接已断开，正在尝试重连；未确认发送的文字已保留。');
+        });
+        socket.on('connect_error', () => {
+            joinedRoom = false;
+            connection(false, '暂时无法连接服务器，请确认程序正在运行。');
+        });
+        socket.on('auth_error', (message) => requireLogin(message));
+        socket.on('err', (message) => {
+            releasePendingSend();
+            status(message || '操作失败，请重试。', true);
+            byId('profile-status').textContent = String(message || '操作失败，请重试。');
+        });
+        function applyAiStatus(data) {
+            status(data.message || 'AI 正在处理…', data.status === 'error');
+            byId('cancel-ai').hidden = !['waiting', 'analyzing', 'generating'].includes(data.status);
+            byId('cancel-ai').disabled = false;
+        }
+        socket.on('ai_status', (data) => {
+            if (!data || data.room !== curR) return;
+            if (!joinedRoom) {
+                pendingAiStatus = data;
+                return;
+            }
+            applyAiStatus(data);
+        });
+        socket.on('assistant_state', data => { if (assistantUI) assistantUI.accept(data); });
+
+        socket.on('update_users', (data) => {
+            if (!data || data.room !== curR || !Array.isArray(data.users)) return;
+            byId('user-count').textContent = data.users.length;
+            const items = data.users.map(user => {
+                const item = node('div', 'flex items-center gap-3 p-2 bg-white rounded-xl shadow-sm border border-gray-50');
+                item.append(avatar(user.avatar, 'w-8 h-8 rounded-lg object-cover'), node('span', 'truncate', user.nick));
+                return item;
+            });
+            byId('user-list').replaceChildren(...items);
+        });
+
+        function openImage(url) {
+            const safe = safeMediaUrl(url, 'image');
+            if (!safe) return;
+            byId('viewer-img').src = safe;
+            byId('img-viewer').style.display = 'flex';
+        }
+
+        function setReply(nick, text) {
+            currentQuote = {nick: String(nick ?? '').slice(0, 40), m: String(text ?? '').slice(0, 4000)};
+            byId('replyNick').textContent = currentQuote.nick;
+            byId('replyText').textContent = currentQuote.m;
+            byId('replyBar').style.display = 'flex';
+            byId('mi').focus();
+        }
+
+        function cancelReply() {
+            currentQuote = null;
+            byId('replyBar').style.display = 'none';
+        }
+
+        function toggleSettings(show) {
+            byId('settings-overlay').classList.toggle('hidden', !show);
+            tempAv = '';
+            byId('profile-status').textContent = '';
+            if (show) {
+                byId('setPre').src = safeMediaUrl(localStorage.getItem('chat_avatar'), 'image') || DEFAULT_AVATAR;
+                byId('editNick').value = localStorage.getItem('chat_nick') || '';
+            }
+        }
+
+        async function upload(file) {
+            const fd = new FormData();
+            fd.append('file', file);
+            const response = await fetch('/upload', {
+                method: 'POST', body: fd, headers: {Authorization: `Bearer ${chatToken}`}
+            });
+            let data;
+            try { data = await response.json(); } catch (_) { throw new Error('上传失败，请检查文件大小或服务器状态。'); }
+            if (response.status === 401) {
+                requireLogin('登录已失效，请重新登录。');
+                throw new Error('登录已失效。');
+            }
+            if (!response.ok || data.err || !data.url) throw new Error(data.err || '上传失败，请重试。');
+            return data;
+        }
+
+        async function upAv() {
+            const file = byId('ai').files[0];
+            if (!file) return;
+            if (detectUploadType(file) !== 'image') {
+                byId('profile-status').textContent = '请选择 PNG、JPG、GIF、WebP 或 BMP 图片。';
+                byId('ai').value = '';
+                return;
+            }
+            byId('save-profile').disabled = true;
+            byId('profile-status').textContent = '头像上传中…';
+            try {
+                const data = await upload(file);
+                tempAv = safeMediaUrl(data.url, 'image');
+                if (!tempAv) throw new Error('头像地址无效，请重新上传。');
+                byId('setPre').src = tempAv;
+                byId('profile-status').textContent = '头像已上传，点击保存修改后生效。';
+            } catch (error) {
+                byId('profile-status').textContent = error.message;
+            } finally {
+                byId('save-profile').disabled = false;
+                byId('ai').value = '';
+            }
+        }
+
+        function saveProfile() {
+            const nick = byId('editNick').value.trim();
+            if (!socket.connected) {
+                byId('profile-status').textContent = '连接已断开，请连接恢复后保存。';
+                return;
+            }
+            if (!nick || Array.from(nick).length > 40) {
+                byId('profile-status').textContent = '昵称应为 1–40 个字符。';
+                return;
+            }
+            socket.emit('update_profile', {
+                u: myU, token: chatToken, nick, avatar: tempAv || localStorage.getItem('chat_avatar')
+            });
+            byId('profile-status').textContent = '正在保存…';
+        }
+
+        socket.on('update_res', (result) => {
+            if (result.status !== 'success' || !result.user) return;
+            localStorage.setItem('chat_nick', result.user.nick);
+            localStorage.setItem('chat_avatar', result.user.avatar);
+            updateUserInfo();
+            toggleSettings(false);
+            status('资料已保存。');
+        });
+
+        function chRoom(el, room) {
+            if (curR === room) return;
+            document.querySelectorAll('.room').forEach(item => {
+                item.classList.remove('bg-primary', 'text-white', 'shadow-lg');
+                item.classList.add('hover:bg-white', 'text-gray-500');
+            });
+            el.classList.remove('hover:bg-white', 'text-gray-500');
+            el.classList.add('bg-primary', 'text-white', 'shadow-lg');
+            curR = room;
+            joinedRoom = false;
+            pendingRoomMessages = [];
+            pendingAiStatus = null;
+            if (assistantUI) assistantUI.setRoom(curR);
+            byId('cancel-ai').hidden = true;
+            releasePendingSend();
+            cancelReply();
+            byId('roomName').textContent = el.textContent.trim();
+            byId('msgs').replaceChildren();
+            byId('user-list').replaceChildren();
+            byId('user-count').textContent = '0';
+            seenMessageIds.clear();
+            lastTimeStr = '';
+            updateControls();
+            if (socket.connected) {
+                status('正在切换频道…');
+                socket.emit('join', {room, u: myU, token: chatToken});
+            } else {
+                status('当前离线，连接恢复后将进入此频道。', true);
+            }
+        }
+
+        socket.on('history', (data) => {
+            if (!data || data.room !== curR || !Array.isArray(data.messages)) return;
+            byId('msgs').replaceChildren();
+            seenMessageIds.clear();
+            lastTimeStr = '';
+            data.messages.forEach(message => show(message, false));
+            joinedRoom = true;
+            updateControls();
+            status('已连接。需求确认后生成方案；点击“询问 AI”可直接提问。');
+            // Messages can arrive after the server takes its history snapshot but
+            // before that snapshot reaches us. Replay them only after history;
+            // show() deduplicates any messages already present in the snapshot.
+            const bufferedMessages = pendingRoomMessages;
+            pendingRoomMessages = [];
+            bufferedMessages.forEach(renderLiveMessage);
+            if (pendingAiStatus) {
+                applyAiStatus(pendingAiStatus);
+                pendingAiStatus = null;
+            }
+            scrollToBottom();
+        });
+        function renderLiveMessage(data) {
+            show(data, true);
+            if (data.bot) status('AI 已回复。');
+        }
+        socket.on('new_msg', (data) => {
+            if (!data || data.room !== curR) return;
+            if (!joinedRoom) {
+                pendingRoomMessages.push(data);
+                return;
+            }
+            renderLiveMessage(data);
+        });
+
+        function inferMsgType(data) {
+            const type = typeof data.t === 'string' ? data.t.toLowerCase() : 'text';
+            if (['image', 'video', 'audio'].includes(type)) return type;
+            const url = typeof data.url === 'string' ? data.url.toLowerCase().split('?')[0] : '';
+            if (/\.(png|jpg|jpeg|gif|webp|bmp)$/.test(url)) return 'image';
+            if (/\.(mp4|webm|ogg|mov|m4v)$/.test(url)) return 'video';
+            if (/\.(mp3|wav|m4a|aac|flac)$/.test(url)) return 'audio';
+            return 'text';
+        }
+
+        function quoteNode(quote) {
+            return node('div', 'quote-box', `@${String(quote.nick ?? '')}: ${String(quote.m ?? '')}`);
+        }
+
+        function show(data, isNew = true) {
+            if (!data || (data.room && data.room !== curR)) return;
+            if (data.id && seenMessageIds.has(data.id)) return;
+            if (data.id) seenMessageIds.add(data.id);
+            const isMe = data.u === myU;
+            const isBot = data.bot === true;
+            const type = inferMsgType(data);
+            const time = String(data.time ?? '');
+            if (time !== lastTimeStr) {
+                const divider = node('div', 'time-divider');
+                divider.append(node('span', 'time-tag', time));
+                byId('msgs').append(divider);
+                lastTimeStr = time;
+            }
+            const row = node('div', `flex gap-4 group ${isNew ? 'msg-fade-in' : ''} ${isMe ? 'flex-row-reverse' : ''}`);
+            row.append(avatar(data.avatar, 'w-10 h-10 md:w-11 md:h-11 rounded-2xl object-cover shrink-0 border-2 border-white shadow-md'));
+            const column = node('div', `flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[min(92vw,42rem)] min-w-0`);
+            const name = node('span', 'text-[10px] text-gray-400 font-black mb-1.5 px-2 uppercase tracking-widest', data.nick);
+            if (isBot) name.append(node('span', 'bg-blue-500 text-white px-1 rounded ml-2', 'BOT'));
+            else if (data.ask_ai) name.append(node('span', 'bg-primaryLight text-primary px-1 rounded ml-2', '询问 AI'));
+            column.append(name);
+            const bodyRow = node('div', `flex items-center gap-2 min-w-0 ${isMe ? 'flex-row-reverse' : ''}`);
+            const mediaUrl = type === 'text' ? '' : safeMediaUrl(data.url, type);
+            let content;
+            if (mediaUrl) {
+                content = node('div', 'p-3 bg-white rounded-[1.5rem] shadow-lg border border-gray-100 max-w-full');
+                if (data.quote) content.append(quoteNode(data.quote));
+                const media = node(type === 'image' ? 'img' : type, `msg-media-${type === 'image' ? 'img' : type} rounded-[1.2rem] block`);
+                media.src = mediaUrl;
+                media.referrerPolicy = 'no-referrer';
+                if (type === 'image') {
+                    media.alt = String(data.m || '聊天图片');
+                    media.loading = 'lazy';
+                    media.classList.add('cursor-zoom-in');
+                    media.addEventListener('click', () => openImage(mediaUrl));
+                } else {
+                    media.controls = true;
+                    media.preload = 'metadata';
+                    if (type === 'video') media.playsInline = true;
+                }
+                content.append(media);
+            } else {
+                const bubble = isMe
+                    ? 'bg-gradient-to-br from-primary to-accent text-white rounded-tr-none border-primary/20'
+                    : (isBot ? 'bg-[#E8F0FE] text-[#1A73E8] rounded-tl-none border-blue-100' : 'bg-white text-dark rounded-tl-none border-gray-100');
+                content = node('div', `p-4 px-6 text-[15px] font-medium whitespace-pre-wrap break-words rounded-[1.5rem] shadow-md border cursor-pointer ${bubble}`);
+                if (data.quote) content.append(quoteNode(data.quote));
+                content.append(node('span', '', data.m));
+                if (type !== 'text') content.append(node('div', 'text-xs mt-2', '附件地址无效，已阻止加载。'));
+                content.addEventListener('click', () => setReply(data.nick, data.m));
+            }
+            const reply = node('button', 'opacity-0 group-hover:opacity-100 focus:opacity-100 text-gray-400 hover:text-primary transition-all text-xs shrink-0');
+            reply.type = 'button';
+            reply.title = '引用回复';
+            reply.setAttribute('aria-label', '引用回复');
+            reply.append(node('i', 'fa fa-reply'));
+            reply.addEventListener('click', () => setReply(data.nick, data.m));
+            bodyRow.append(content, reply);
+            column.append(bodyRow);
+            row.append(column);
+            byId('msgs').append(row);
+            if (isNew) scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            byId('msgs').scrollTo({top: byId('msgs').scrollHeight, behavior: 'smooth'});
+        }
+
+        function detectUploadType(file) {
+            const extension = String(file.name || '').toLowerCase().split('.').pop();
+            const mime = String(file.type || '').toLowerCase();
+            if (mime === 'image/svg+xml' || extension === 'svg') return null;
+            for (const kind of ['image', 'video', 'audio']) {
+                if (MEDIA_EXT[kind].includes(extension) && (!mime || mime.startsWith(`${kind}/`) || mime === 'application/octet-stream')) return kind;
+            }
+            return null;
+        }
+
+        function readyToSend() {
+            if (!socket.connected || !joinedRoom) {
+                status('当前尚未连接频道，文字已保留，请稍后发送。', true);
+                return false;
+            }
+            return !pendingSend && !uploading;
+        }
+
+        function releasePendingSend() {
+            if (pendingSend) clearTimeout(pendingSend.timer);
+            pendingSend = null;
+            updateControls();
+        }
+
+        function emitMessage(payload, textSnapshot = null) {
+            const request = {payload, textSnapshot};
+            pendingSend = request;
+            request.timer = setTimeout(() => {
+                if (pendingSend !== request) return;
+                releasePendingSend();
+                status('尚未收到发送确认，请先检查聊天记录，避免重复发送；文字已保留。', true);
+            }, 15000);
+            updateControls();
+            socket.emit('send_msg', {...payload, u: myU, token: chatToken}, (result) => {
+                if (pendingSend !== request) return;
+                releasePendingSend();
+                if (!result || result.ok !== true) {
+                    status((result && result.error) || '发送失败，文字已保留。', true);
+                    return;
+                }
+                if (textSnapshot !== null && byId('mi').value === textSnapshot) byId('mi').value = '';
+                if (currentQuote === payload.quote) cancelReply();
+            });
+        }
+
+        async function upFile() {
+            const file = byId('fi').files[0];
+            if (!file || !readyToSend()) return;
+            const type = detectUploadType(file);
+            if (!type) {
+                status('请选择支持的图片、视频或音频文件；不支持 SVG。', true);
+                byId('fi').value = '';
+                return;
+            }
+            const room = curR, quote = currentQuote;
+            uploading = true;
+            updateControls();
+            status('附件上传中…');
+            try {
+                const data = await upload(file);
+                if (curR !== room || !socket.connected || !joinedRoom) {
+                    status('频道已切换或连接已断开，本次附件未发送。', true);
+                    return;
+                }
+                if (!safeMediaUrl(data.url, type)) throw new Error('附件地址无效。');
+                emitMessage({room, m: file.name, t: type, url: data.url, quote});
+                status('附件已上传，正在确认发送…');
+            } catch (error) {
+                status(error.message || '上传失败，请稍后重试。', true);
+            } finally {
+                uploading = false;
+                updateControls();
+                byId('fi').value = '';
+            }
+        }
+
+        function send(askAI = false) {
+            const text = byId('mi').value;
+            if (!text.trim()) {
+                if (askAI === true) status('先写下问题，再点击“询问 AI”。');
+                byId('mi').focus();
+                return;
+            }
+            if (!readyToSend()) return;
+            if (Array.from(text).length > 4000) {
+                status('消息最多 4000 个字符，请缩短后发送。', true);
+                return;
+            }
+            const explicit = askAI === true || /^[@＠]ai(?:\s|[:：]|$)/i.test(text.trim());
+            emitMessage({room: curR, m: text, t: 'text', url: '', quote: currentQuote, ask_ai: explicit}, text);
+        }
+
+        byId('img-viewer').addEventListener('click', () => { byId('img-viewer').style.display = 'none'; });
+        byId('open-settings').addEventListener('click', () => toggleSettings(true));
+        byId('close-settings').addEventListener('click', () => toggleSettings(false));
+        byId('save-profile').addEventListener('click', saveProfile);
+        byId('choose-avatar').addEventListener('click', () => byId('ai').click());
+        byId('ai').addEventListener('change', upAv);
+        byId('cancel-reply').addEventListener('click', cancelReply);
+        byId('attach-file').addEventListener('click', () => byId('fi').click());
+        byId('fi').addEventListener('change', upFile);
+        byId('send-message').addEventListener('click', () => send(false));
+        byId('ask-ai').addEventListener('click', () => send(true));
+        byId('cancel-ai').addEventListener('click', () => {
+            if (!socket.connected || !joinedRoom) {
+                status('当前连接已断开，暂时无法停止回复。', true);
+                return;
+            }
+            byId('cancel-ai').disabled = true;
+            socket.emit('cancel_ai', {room: curR, token: chatToken}, (result) => {
+                byId('cancel-ai').disabled = false;
+                if (result && result.ok === false) status(result.error || '停止失败，请重试。', true);
+            });
+        });
+        ['Lobby', 'ZenRoom'].forEach(room => byId(`btn-${room}`).addEventListener('click', () => chRoom(byId(`btn-${room}`), room)));
+        byId('mi').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && event.keyCode !== 229) {
+                event.preventDefault();
+                send();
+            }
+        });
+        byId('mi').addEventListener('input', () => {
+            byId('mi').style.height = 'auto';
+            byId('mi').style.height = `${Math.min(byId('mi').scrollHeight || 48, 120)}px`;
+        });
+        assistantUI = window.createAssistantUI({
+            socket, token: chatToken, getRoom: () => curR,
+            isReady: () => socket.connected && joinedRoom,
+            prefill: text => {
+                byId('mi').value = text;
+                byId('mi').focus();
+                status('示例已填入，可以修改后再发送。');
+            }
+        });
+        if (!myU || !chatToken) {
+            requireLogin('安全校验已更新，请重新登录后继续聊天。');
+        } else {
+            socket.connect();
+        }
+    </script>
+</body>
+</html>

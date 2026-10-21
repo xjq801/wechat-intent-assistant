@@ -1,0 +1,107 @@
+[
+  {
+    "call": 1,
+    "ok": true,
+    "model": "qwen3.8-flash",
+    "usage": {
+      "prompt_tokens": 254,
+      "total_tokens": 380,
+      "completion_tokens": 126,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 254
+      }
+    },
+    "seconds": 2.413
+  },
+  {
+    "call": 2,
+    "ok": true,
+    "model": "qwen3.8-flash",
+    "usage": {
+      "prompt_tokens": 247,
+      "total_tokens": 276,
+      "completion_tokens": 29,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 247
+      }
+    },
+    "seconds": 1.698
+  },
+  {
+    "call": 3,
+    "ok": true,
+    "model": "qwen3.8-flash",
+    "usage": {
+      "prompt_tokens": 256,
+      "total_tokens": 570,
+      "completion_tokens": 314,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 256
+      }
+    },
+    "seconds": 4.334
+  },
+  {
+    "call": 4,
+    "ok": true,
+    "model": "qwen3.8-flash",
+    "usage": {
+      "prompt_tokens": 257,
+      "total_tokens": 570,
+      "completion_tokens": 313,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 257
+      }
+    },
+    "seconds": 5.418
+  },
+  {
+    "call": 5,
+    "ok": true,
+    "model": "qwen3.8-flash",
+    "usage": {
+      "prompt_tokens": 206,
+      "total_tokens": 244,
+      "completion_tokens": 38,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 206
+      }
+    },
+    "seconds": 1.074
+  },
+  {
+    "call": 6,
+    "ok": true,
+    "model": "qwen3.8-flash",
+    "usage": {
+      "prompt_tokens": 257,
+      "total_tokens": 622,
+      "completion_tokens": 365,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 257
+      }
+    },
+    "seconds": 6.236
+  },
+  {
+    "call": 7,
+    "ok": true,
+    "model": "qwen3.8-flash",
+    "usage": {
+      "prompt_tokens": 257,
+      "total_tokens": 602,
+      "completion_tokens": 345,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 257
+      }
+    },
+    "seconds": 6.424
+  }
+]

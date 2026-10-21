@@ -1,0 +1,43 @@
+{
+  "checked_at": "2026-10-20T17:05:45+08:00",
+  "implementation": "six assistant features",
+  "python_tests_passed": 151,
+  "frontend_tests_passed": 28,
+  "automated_tests_total": 179,
+  "live_local_model_smoke_passed": true,
+  "live_api_requests": 7,
+  "live_api_requests_ok": 7,
+  "live_api_reported_total_tokens": 3264.0,
+  "final_proposal_source": "千问云端（结构校验）",
+  "final_proposal_count": 3,
+  "final_proposal_seconds": 6.427,
+  "browser_checks_passed": [
+    "missing field clarification",
+    "card edit and save",
+    "natural language time edit",
+    "confirmation before generation",
+    "auto detection off",
+    "explicit cloud Q&A without card mutation",
+    "cloud proposals displayed",
+    "trace expanded",
+    "state restored after restart",
+    "complete task",
+    "new task clears context"
+  ],
+  "production_http": {
+    "login": 200,
+    "assistant_js": 200,
+    "assistant_css": 200
+  },
+  "production_url": "http://127.0.0.1:5000/chat",
+  "production_local_device": "cuda",
+  "cloud_model": "qwen3.8-flash",
+  "production_data_used_for_tests": false,
+  "live_data_connector": false,
+  "mobile_browser_tested": false,
+  "screenshots": [
+    "六项功能升级界面.png",
+    "六项功能_方案比较.png",
+    "六项功能_处理过程.png"
+  ]
+}

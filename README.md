@@ -6,6 +6,8 @@
 
 本仓库同时保留原网页系统、训练数据、最终 LoRA 权重及测试。网页基线可从 `web-v1` 标签查看。基础模型、密钥和个人聊天数据不随仓库上传。
 
+欢迎参与修改：Fork 本仓库，在自己的分支开发后提交 Pull Request。具体步骤和验证命令见 [参与开发说明](CONTRIBUTING.md)。
+
 ## 项目目录
 
 - [`desktop/`](desktop/README.md)：当前群聊推荐桌面程序、Windows 本地 OCR、推荐逻辑、Python 桥接和测试。
